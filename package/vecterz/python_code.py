@@ -1,6 +1,9 @@
 import unittest, pdb
 import random, re
 
+def get_input(text):
+	return input(text)
+
 class Board(object):
 	
 	help_string = '''
@@ -18,7 +21,7 @@ class Board(object):
 		save or s:  Save the game (but y tho?) to a file.  Feature under 
 					development. Does nothing currently.
 
-		new or n:	Enters startup mode and prompts you to either keep 
+		reboot or r:Enters startup mode and prompts you to either keep 
 					players and marks as is, or keep players with the same 
 					marks, switch marks, or randomly select new marks. If 
 					a game is underway, you have the option of keeping the 
@@ -34,7 +37,7 @@ class Board(object):
 
 		quit or q: 	Same as in Gameplay mode. And still the best choice.
 	
-		new or n: 	Restarts startup mode and wipes away all entries made
+		reboot or r:Restarts startup mode and wipes away all entries made
 					in prior startup mode. Preexisting game state remains 
 					unchanged.
 
@@ -94,6 +97,8 @@ class Board(object):
 		   --- --- ---
 		'''
 		return output
+
+	
 
 	def blank_board(self):
 		self.board_state = [[' ', ' ', ' '] for i in range(3)]
@@ -191,7 +196,12 @@ class TestTicTac(unittest.TestCase):
 						   				  ['o', 'x', 'o'],
 										  ['x', ' ', ' ']])
 		self.board3.evaluate_game()
-	
+
+	def test_get_input(self):
+		@patch('python_code.get_input', return_value='q')
+		self.board1.input()
+		self.assertEqual()	
+
 	def test_count_moves(self):
 		self.assertEqual(self.board0.count_moves()['x'],4)
 		self.assertEqual(self.board0.count_moves()['o'], 4)
