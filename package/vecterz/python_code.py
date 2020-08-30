@@ -1,11 +1,8 @@
 import unittest, pdb
 import random, re
 
-def get_input(text):
-	return input(text)
-
 class Board(object):
-	
+
 	help_string = '''
 		The interface responds to the following commands:
 
@@ -71,7 +68,11 @@ class Board(object):
 		Have fun.
 	'''
 
+		
+		
+
 	def __init__(self, users = None, board_state= None):
+
 		if users:
 			random_pick = random.randint(0,1) 
 			self.x = users[random_pick]
@@ -97,8 +98,12 @@ class Board(object):
 		   --- --- ---
 		'''
 		return output
-
 	
+	def save(self):
+		pass
+
+	def startup(self):
+		pass
 
 	def blank_board(self):
 		self.board_state = [[' ', ' ', ' '] for i in range(3)]
@@ -115,26 +120,27 @@ class Board(object):
 	def determine_turn(self):
 		return self.x if self.count_moves()['x'] == self.count_moves()['o'] else self.o 	
 		
-	def gameplay(self):
-		self.evalulate_game()
-		#maybe use switch for control flow here
-
-		if self.game_state == 'win':
-			print(f'{self.winner} has won!')
-
-		elif self.game_state == 'draw':
-			print(f'It\'s a draw!')	
-
-		elif self.game_state == 'continue':
-			print(f'{self.determine_turn()}, it\'s your turn!')			
-
-			user_input = input()
-			if user_input == 'h' or 'help':
-				print(Board.help_string)
-				#this method still under development
+	def interface(self):
+		self.command_dict = {
+			'q': None, 
+			'r': lambda : self.startup(),
+			's': lambda: self.save(), 
+			'h': print(self.help_string), 
+			'b': print(self.blurb_string)
+		}
+		command_list = ['q', 'quit', 'r', 'reboot', 's', 'save', 'h', 'help', 'b', 'blurb'] 
 		
-		#self.get_move()
-
+		while True:
+			user_input = input(self.prompt())
+			if user_input in command_list:
+				execute = self.command_dict.get(user_input[0])
+				if not execute:
+					print('Thank you for coming to your senses! Kindly fuck off')
+					break
+				else:
+					execute()
+			else:
+					
 	def sum_along_path(self, line_type, axis, mark):
 		if line_type == 'row':
 			return self.board_state[axis].count(mark)
@@ -197,10 +203,19 @@ class TestTicTac(unittest.TestCase):
 										  ['x', ' ', ' ']])
 		self.board3.evaluate_game()
 
-	def test_get_input(self):
-		@patch('python_code.get_input', return_value='q')
-		self.board1.input()
-		self.assertEqual()	
+	def test_get_input_commands(self):
+		#Should filter out q, quit, r, reboot, s, save, h, help, b, blurb
+		@patch('builtins.input', side_effect =['q','quit']) 
+		
+		@patch('builtins.input', side_effect =['r', 'reboot']) 
+	
+		@patch('builtins.input', side_effect =['s', 'save']) 
+		
+		@patch('builtins.input', side_effect =['h', 'help']) 
+		
+		@patch('builtins.input', side_effect =['b', 'blurb']) 
+		
+		
 
 	def test_count_moves(self):
 		self.assertEqual(self.board0.count_moves()['x'],4)
@@ -258,3 +273,4 @@ class TestTicTac(unittest.TestCase):
 
 if __name__ == '__main__':
 	unittest.main()
+
