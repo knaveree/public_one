@@ -67,24 +67,14 @@ class Board(object):
 
 		Have fun.
 	'''
-
-		
-		
-
+	
+	###UNTESTED##
 	def __init__(self, users = None, board_state= None):
-
-		if users:
-			random_pick = random.randint(0,1) 
-			self.x = users[random_pick]
-			self.o = users[(random_pick - 1) % 2]
-		else:
-			self.x, self.o = self.get_usernames()
-
-		if not board_state:
-			self.blank_board()
-		else: 
-			self.board_state = board_state
-
+	'''
+	UNFINISHED
+	'''
+		
+	###UNTESTED##
 	def __repr__(self):
 		e = self.board_state
 		output = f'''
@@ -98,16 +88,88 @@ class Board(object):
 		   --- --- ---
 		'''
 		return output
-	
+
+	###UNTESTED###
 	def save(self):
+	'''
+	UNFINISHED
+	'''
 		pass
 
+	
+	###UNTESTED###
+	def random_assign(self, names_list):
+		random_pick = random.randint(0,1)
+		complement = (random_pick + 1) % 2
+		self.x, self.o = names_list[random_pick], names_list[complement]
+		return None
+
+	###UNTESTED###	
 	def startup(self):
-		pass
+	'''
+	UNFINISHED
+	'''
+		while True:
+			if self.x and self.o:
+				prompt = '''
+					k = keep names/marks
+					f = flip marks
+					n = new names
+				'''
+				user_input = input(prompt)
+				command = re.match(r'[kfn]', user_input)[0]
+
+				if not command: 
+					print('Invalid entry')
+					continue
+				if command == 'k':
+					pass
+				elif command == 'f':
+					self.x, self.o = self.o, self.x
+				elif command == 'n':
+					self.x, self.o = None, None
+
+			if not (self.x or self.o):
+				names = list()
+				for i in range(2):
+					name = input(f'Enter player {i+1} name'}
+					names.append(name)
+					self.random_assign(names)	
+					
+			if self.game_state == 'continue':
+				while True:
+					user_input = input('Preserve existing game? y/n')
+					if not re.match(r'[yn]', user_input):
+						print('Invalid entry')
+						pass
+					elif user_input == 'y':
+						return None
+					elif user_input == 'n':
+						self.board_state = self.blank_board()
+						return None
+			else:
+				return None
 
 	def blank_board(self):
 		self.board_state = [[' ', ' ', ' '] for i in range(3)]
 
+	###UNTESTED###
+	def update_board(self, square_id):
+		'''
+		UNFINISHED
+		Note that argument should be presanitized
+		this should take an argument and use it to update the board
+		'''
+		mark = self.determine_turn(of = 'mark')
+		x, y = (ord(square_id[0]) - 97, int(square_id[1]))
+
+		if self.board_state[x][y]:  
+			print('This square is already occupied')	
+			pass	
+		else:	
+			self.board_state[x][y] = mark
+			self.evaluate_game()
+		
 	def count_moves(self):
 		x_count, o_count = 0,0
 		for row in self.board_state:
@@ -117,30 +179,14 @@ class Board(object):
 				'o': o_count,
 				'total': x_count + o_count}
 
-	def determine_turn(self):
-		return self.x if self.count_moves()['x'] == self.count_moves()['o'] else self.o 	
-		
-	def interface(self):
-		self.command_dict = {
-			'q': None, 
-			'r': lambda : self.startup(),
-			's': lambda: self.save(), 
-			'h': print(self.help_string), 
-			'b': print(self.blurb_string)
-		}
-		command_list = ['q', 'quit', 'r', 'reboot', 's', 'save', 'h', 'help', 'b', 'blurb'] 
-		
-		while True:
-			user_input = input(self.prompt())
-			if user_input in command_list:
-				execute = self.command_dict.get(user_input[0])
-				if not execute:
-					print('Thank you for coming to your senses! Kindly fuck off')
-					break
-				else:
-					execute()
-			else:
-					
+	###UNTESTED###
+	def determine_turn(self, of = 'player'):
+		turn = 'x' if self.count_moves()['x'] == self.count_moves()['o'] else 'o' 	
+		if of == 'player':
+			return getattr(self, turn)
+		else:
+			return turn
+
 	def sum_along_path(self, line_type, axis, mark):
 		if line_type == 'row':
 			return self.board_state[axis].count(mark)
@@ -159,23 +205,62 @@ class Board(object):
 			for mark in ['x','o']:
 				evaluations = [self.sum_along_path(line_type, axis, mark) for axis in range(3)]
 				if 3 in evaluations: 
-					self.winner = self.__dict__[mark]
-					print(self.winner)
+					self.winner = get_attr(self, mark) 
 					self.game_state = 'win'
-					print(self.game_state)
 					break
 		if not self.winner and self.count_moves()['total'] == 9:
 			self.game_state = 'draw'
-			
-	def print_welcome(self):
-		print(f'Welcome {self.x} and {self.o}!')
-		print(f'{self.x} is X and goes first.')
-		
-#	def get_usernames(self):
-#		#Note that self.get_usernames should randomly choose who's x and who's o
-#	
-#	def get_move(self):
-	
+
+	###UNTESTED###
+	def user_interface(self):
+		while True:
+			user_input = self.package_input(self.prompt())
+			if user_input['type'] == 'command':
+				if not user_input['data']:
+					break
+				else:
+					user_input['data']()
+			elif user_input['type'] == 'move':
+				self.update_board(user_input['data'])
+			elif user_input['type'] == 'invalid'
+				print(f'{user_input['data']} is invalid input; try again!')	
+
+	###UNTESTED###
+	def package_input(self, prompt, bleed_through = False):
+		command_dict = {
+			'q' : None,
+			's' : lambda : self.save(),
+			'r' : lambda : self.startup(),
+			'h' : lambda : print(self.help_string),
+			'i' : lambda : print(self.blurb_string),
+		}
+		commands = re.compile(r'[qsrhi]'])
+		moves = re.compile(r'[abc][123]')
+		while True:
+			user_input = input(prompt)
+			cmd, mv = commands.match(user_input)[0], moves.match(user_input)[0]
+			if not (cmd || mv):
+				if bleed_through:
+					return user_input
+				else:
+					return {
+						'type': 'invalid',
+						'data': user_input
+					}
+			elif cmd: 
+				return {'type' : 'command', 'data' : cmd}
+			elif mv:
+				return {'type' : 'move', 'data' : mv}
+
+	###UNTESTED##	
+	def prompt(self):
+		switcher = {
+			'win': lambda : f'Game over! {self.winner} wins!',
+			'draw' : lambda : 'Looks like a draw!',
+			'continue' : lambda : f'It\'s {self.determine_turn}\'s turn!' 
+		}
+		return switcher.get(self.game_state, 'Let the games begin!')
+
 	
 class TestTicTac(unittest.TestCase):
 	def setUp(self):
