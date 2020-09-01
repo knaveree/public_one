@@ -70,11 +70,23 @@ class Board(object):
 	
 	###UNTESTED##
 	def __init__(self, users = None, board_state= None):
-	'''
-	UNFINISHED
-	'''
-		
-	###UNTESTED##
+		'''
+		UNFINISHED
+		'''
+		self.board_state = board_state
+
+		if users:
+			self.random_assign(users)
+		else:
+			self.x, self.o = None, None
+
+		if self.board_state:
+			self.evaluate_game()
+		else:
+			self.game_state = None
+
+		self.startup()
+
 	def __repr__(self):
 		e = self.board_state
 		output = f'''
@@ -91,13 +103,11 @@ class Board(object):
 
 	###UNTESTED###
 	def save(self):
-	'''
-	UNFINISHED
-	'''
+		'''
+		UNFINISHED
+		'''
 		pass
 
-	
-	###UNTESTED###
 	def random_assign(self, names_list):
 		random_pick = random.randint(0,1)
 		complement = (random_pick + 1) % 2
@@ -106,9 +116,9 @@ class Board(object):
 
 	###UNTESTED###	
 	def startup(self):
-	'''
-	UNFINISHED
-	'''
+		'''
+		UNFINISHED
+		'''
 		while True:
 			if self.x and self.o:
 				prompt = '''
@@ -132,23 +142,25 @@ class Board(object):
 			if not (self.x or self.o):
 				names = list()
 				for i in range(2):
-					name = input(f'Enter player {i+1} name'}
+					name = input(f'Enter player {i+1} name\n')
 					names.append(name)
-					self.random_assign(names)	
+				self.random_assign(names)	
 					
 			if self.game_state == 'continue':
 				while True:
-					user_input = input('Preserve existing game? y/n')
+					user_input = input('Preserve existing game? y/n\n')
 					if not re.match(r'[yn]', user_input):
 						print('Invalid entry')
-						pass
+						continue	
 					elif user_input == 'y':
+						self.evaluate_game()
 						return None
 					elif user_input == 'n':
-						self.board_state = self.blank_board()
-						return None
+						break	
 			else:
+				self.blank_board()
 				return None
+
 
 	def blank_board(self):
 		self.board_state = [[' ', ' ', ' '] for i in range(3)]
@@ -156,14 +168,13 @@ class Board(object):
 	###UNTESTED###
 	def update_board(self, square_id):
 		'''
-		UNFINISHED
 		Note that argument should be presanitized
 		this should take an argument and use it to update the board
 		'''
 		mark = self.determine_turn(of = 'mark')
 		x, y = (ord(square_id[0]) - 97, int(square_id[1]))
 
-		if self.board_state[x][y]:  
+		if not self.board_state[x][y] == ' ':   
 			print('This square is already occupied')	
 			pass	
 		else:	
@@ -222,8 +233,8 @@ class Board(object):
 					user_input['data']()
 			elif user_input['type'] == 'move':
 				self.update_board(user_input['data'])
-			elif user_input['type'] == 'invalid'
-				print(f'{user_input['data']} is invalid input; try again!')	
+			elif user_input['type'] == 'invalid':
+				print(f"{user_input['data']} is invalid input; try again!")	
 
 	###UNTESTED###
 	def package_input(self, prompt, bleed_through = False):
@@ -234,12 +245,13 @@ class Board(object):
 			'h' : lambda : print(self.help_string),
 			'i' : lambda : print(self.blurb_string),
 		}
-		commands = re.compile(r'[qsrhi]'])
+		commands = re.compile(r'[qsrhi]')
 		moves = re.compile(r'[abc][123]')
 		while True:
+			self.evaluate_game()
 			user_input = input(prompt)
 			cmd, mv = commands.match(user_input)[0], moves.match(user_input)[0]
-			if not (cmd || mv):
+			if not (cmd or mv):
 				if bleed_through:
 					return user_input
 				else:
@@ -259,7 +271,8 @@ class Board(object):
 			'draw' : lambda : 'Looks like a draw!',
 			'continue' : lambda : f'It\'s {self.determine_turn}\'s turn!' 
 		}
-		return switcher.get(self.game_state, 'Let the games begin!')
+		return switcher.get(self.game_state, 
+							f'Let the games begin! It\'s {self.determine_turn}\'s turn!')
 
 	
 class TestTicTac(unittest.TestCase):
@@ -289,19 +302,18 @@ class TestTicTac(unittest.TestCase):
 		self.board3.evaluate_game()
 
 	def test_get_input_commands(self):
+		pass
 		#Should filter out q, quit, r, reboot, s, save, h, help, b, blurb
-		@patch('builtins.input', side_effect =['q','quit']) 
+#		@patch('builtins.input', side_effect =['q','quit']) 
+#		
+#		@patch('builtins.input', side_effect =['r', 'reboot']) 
+#	
+#		@patch('builtins.input', side_effect =['s', 'save']) 
+#		
+#		@patch('builtins.input', side_effect =['h', 'help']) 
+#		
+#		@patch('builtins.input', side_effect =['b', 'blurb']) 
 		
-		@patch('builtins.input', side_effect =['r', 'reboot']) 
-	
-		@patch('builtins.input', side_effect =['s', 'save']) 
-		
-		@patch('builtins.input', side_effect =['h', 'help']) 
-		
-		@patch('builtins.input', side_effect =['b', 'blurb']) 
-		
-		
-
 	def test_count_moves(self):
 		self.assertEqual(self.board0.count_moves()['x'],4)
 		self.assertEqual(self.board0.count_moves()['o'], 4)
