@@ -71,21 +71,11 @@ class Board(object):
 	###UNTESTED##
 	def __init__(self, users = None, board_state= None):
 		'''
-		UNFINISHED
+		TESTING FORMAT ONLY
 		'''
+		self.x, self.o = users[0], users[1]
 		self.board_state = board_state
-
-		if users:
-			self.random_assign(users)
-		else:
-			self.x, self.o = None, None
-
-		if self.board_state:
-			self.evaluate_game()
-		else:
-			self.game_state = None
-
-		self.startup()
+		self.evaluate_game()
 
 	def __repr__(self):
 		e = self.board_state
@@ -119,48 +109,7 @@ class Board(object):
 		'''
 		UNFINISHED
 		'''
-		while True:
-			if self.x and self.o:
-				prompt = '''
-					k = keep names/marks
-					f = flip marks
-					n = new names
-				'''
-				user_input = input(prompt)
-				command = re.match(r'[kfn]', user_input)[0]
-
-				if not command: 
-					print('Invalid entry')
-					continue
-				if command == 'k':
-					pass
-				elif command == 'f':
-					self.x, self.o = self.o, self.x
-				elif command == 'n':
-					self.x, self.o = None, None
-
-			if not (self.x or self.o):
-				names = list()
-				for i in range(2):
-					name = input(f'Enter player {i+1} name\n')
-					names.append(name)
-				self.random_assign(names)	
-					
-			if self.game_state == 'continue':
-				while True:
-					user_input = input('Preserve existing game? y/n\n')
-					if not re.match(r'[yn]', user_input):
-						print('Invalid entry')
-						continue	
-					elif user_input == 'y':
-						self.evaluate_game()
-						return None
-					elif user_input == 'n':
-						break	
-			else:
-				self.blank_board()
-				return None
-
+		pass
 
 	def blank_board(self):
 		self.board_state = [[' ', ' ', ' '] for i in range(3)]
@@ -190,7 +139,6 @@ class Board(object):
 				'o': o_count,
 				'total': x_count + o_count}
 
-	###UNTESTED###
 	def determine_turn(self, of = 'player'):
 		turn = 'x' if self.count_moves()['x'] == self.count_moves()['o'] else 'o' 	
 		if of == 'player':
@@ -207,62 +155,27 @@ class Board(object):
 			diagonal = lambda i, axis: self.board_state[2*(axis%2) +((-1)**axis)*i][i] 
 			return [diagonal(i, axis) for i in range(3)].count(mark)
 
+	###UNTESTED##
 	def evaluate_game(self):
 		self.game_state = 'continue'
 		self.winner = None
 		for line_type in ['diagonal','column', 'row']:
-			if self.game_state == 'win':
-				break
 			for mark in ['x','o']:
 				evaluations = [self.sum_along_path(line_type, axis, mark) for axis in range(3)]
 				if 3 in evaluations: 
-					self.winner = get_attr(self, mark) 
+					self.winner = getattr(self, mark) 
 					self.game_state = 'win'
-					break
-		if not self.winner and self.count_moves()['total'] == 9:
+					return None
+		if self.count_moves()['total'] == 9:
 			self.game_state = 'draw'
 
 	###UNTESTED###
 	def user_interface(self):
-		while True:
-			user_input = self.package_input(self.prompt())
-			if user_input['type'] == 'command':
-				if not user_input['data']:
-					break
-				else:
-					user_input['data']()
-			elif user_input['type'] == 'move':
-				self.update_board(user_input['data'])
-			elif user_input['type'] == 'invalid':
-				print(f"{user_input['data']} is invalid input; try again!")	
+		pass
 
 	###UNTESTED###
-	def package_input(self, prompt, bleed_through = False):
-		command_dict = {
-			'q' : None,
-			's' : lambda : self.save(),
-			'r' : lambda : self.startup(),
-			'h' : lambda : print(self.help_string),
-			'i' : lambda : print(self.blurb_string),
-		}
-		commands = re.compile(r'[qsrhi]')
-		moves = re.compile(r'[abc][123]')
-		while True:
-			self.evaluate_game()
-			user_input = input(prompt)
-			cmd, mv = commands.match(user_input)[0], moves.match(user_input)[0]
-			if not (cmd or mv):
-				if bleed_through:
-					return user_input
-				else:
-					return {
-						'type': 'invalid',
-						'data': user_input
-					}
-			elif cmd: 
-				return {'type' : 'command', 'data' : cmd}
-			elif mv:
-				return {'type' : 'move', 'data' : mv}
+	def package_input(self, prompt, input_type = None):
+		pass
 
 	###UNTESTED##	
 	def prompt(self):
@@ -300,6 +213,15 @@ class TestTicTac(unittest.TestCase):
 						   				  ['o', 'x', 'o'],
 										  ['x', ' ', ' ']])
 		self.board3.evaluate_game()
+	
+	def test_determine_turn(self):
+		self.assertEqual(self.board0.determine_turn(of = 'player'), self.board0.x)
+		self.assertEqual(self.board0.determine_turn(), self.board0.x)
+		self.assertEqual(self.board0.determine_turn(of = 'mark'), 'x')
+		
+		self.assertEqual(self.board1.determine_turn(of = 'player'), self.board1.o)
+		self.assertEqual(self.board1.determine_turn(), self.board1.o)
+		self.assertEqual(self.board1.determine_turn(of = 'mark'), 'o')
 
 	def test_get_input_commands(self):
 		pass
@@ -361,7 +283,7 @@ class TestTicTac(unittest.TestCase):
 
 		self.assertEqual(self.board3.game_state, 'win', 'This game should have a winner')
 		self.assertEqual(self.board3.winner, self.board3.x, 'Winner listed here')
-#
+
 	
 #	def test_gameplay(self):
 		#should determine whose turn it is based on number of x's and o's, assuming
