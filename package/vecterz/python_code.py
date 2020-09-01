@@ -67,14 +67,21 @@ class Board(object):
 
 		Have fun.
 	'''
+	def blank_board(self):
+		return [[' ', ' ', ' '] for i in range(3)]
 	
 	###UNTESTED##
 	def __init__(self, users = None, board_state= None):
 		'''
 		TESTING FORMAT ONLY
 		'''
-		self.x, self.o = users[0], users[1]
-		self.board_state = board_state
+		self.x, self.o = (users[0], users[1]) if users else (None, None)
+
+		if board_state:
+			self.board_state = board_state
+		else:
+			self.board_state = self.blank_board()	
+
 		self.evaluate_game()
 
 	def __repr__(self):
@@ -111,10 +118,7 @@ class Board(object):
 		'''
 		pass
 
-	def blank_board(self):
-		self.board_state = [[' ', ' ', ' '] for i in range(3)]
 
-	###UNTESTED###
 	def update_board(self, square_id):
 		'''
 		Note that argument should be presanitized
@@ -156,17 +160,26 @@ class Board(object):
 			return [diagonal(i, axis) for i in range(3)].count(mark)
 
 	def evaluate_game(self):
-		self.game_state = 'continue'
+		moves = self.count_moves()['total']
 		self.winner = None
-		for line_type in ['diagonal','column', 'row']:
-			for mark in ['x','o']:
-				evaluations = [self.sum_along_path(line_type, axis, mark) for axis in range(3)]
-				if 3 in evaluations: 
-					self.winner = getattr(self, mark) 
-					self.game_state = 'win'
-					return None
-		if self.count_moves()['total'] == 9:
-			self.game_state = 'draw'
+		if moves == 0:
+			self.game_state = None
+			self.winner = None
+			return None
+		else:
+			self.game_state = 'continue'
+			if moves < 3:
+				return None
+			else:
+				for line_type in ['diagonal','column', 'row']:
+					for mark in ['x','o']:
+						evaluations = [self.sum_along_path(line_type, axis, mark) for axis in range(3)]
+						if 3 in evaluations: 
+							self.winner = getattr(self, mark) 
+							self.game_state = 'win'
+							return None
+				if self.count_moves()['total'] == 9:
+					self.game_state = 'draw'
 
 	###UNTESTED###
 	def user_interface(self):
@@ -176,15 +189,14 @@ class Board(object):
 	def package_input(self, prompt, input_type = None):
 		pass
 
-	###UNTESTED##	
 	def prompt(self):
 		switcher = {
-			'win': lambda : f'Game over! {self.winner} wins!',
-			'draw' : lambda : 'Looks like a draw!',
-			'continue' : lambda : f'It\'s {self.determine_turn}\'s turn!' 
+			'win': f'Game over! {self.winner} wins!',
+			'draw' : 'Looks like a draw!',
+			'continue' : f'It\'s {self.determine_turn()}\'s turn!' 
 		}
 		return switcher.get(self.game_state, 
-							f'Let the games begin! It\'s {self.determine_turn}\'s turn!')
+			f'Let the games begin! It\'s {self.determine_turn()}\'s turn!')
 
 	
 class TestTicTac(unittest.TestCase):
@@ -193,25 +205,31 @@ class TestTicTac(unittest.TestCase):
 						    board_state = [['o', 'o', 'x'],
 						   				  ['x', 'o', 'x'],
 										  ['x', ' ', 'o']])
-		self.board0.evaluate_game()
 
 		self.board1 = Board(users = ['Nathan', 'Big Guy'],
 						    board_state = [['x', 'o', 'x'],
 						   				  ['x', 'o', 'o'],
 										  ['x', ' ', ' ']])
-		self.board1.evaluate_game()
 
 		self.board2 = Board(users = ['Nathan', 'Big Guy'],
 						    board_state = [['x', 'o', 'x'],
 						   	  			  ['x', 'o', 'o'],
 										  ['o', 'x', 'x']])
-		self.board2.evaluate_game()
 
 		self.board3 = Board(users = ['Nathan', 'Big Guy'],
 						   board_state = [['x', 'o', 'x'],
 						   				  ['o', 'x', 'o'],
 										  ['x', ' ', ' ']])
-		self.board3.evaluate_game()
+
+		self.board4 = Board(users = ['Nathan', 'Big Guy'])
+
+	def test_prompt(self):
+		board = self.board2
+		self.assertEqual(board.prompt(), 'Looks like a draw!')
+		board = self.board3
+		self.assertEqual(board.prompt(), 'Game over! Nathan wins!')
+		board = self.board4
+		self.assertEqual(board.prompt(), 'Let the games begin! It\'s Nathan\'s turn!')
 
 	def test_update_board(self):
 		board = self.board3
