@@ -121,7 +121,7 @@ class Board(object):
 		this should take an argument and use it to update the board
 		'''
 		mark = self.determine_turn(of = 'mark')
-		x, y = (ord(square_id[0]) - 97, int(square_id[1]))
+		y, x = (ord(square_id[0]) - 97, int(square_id[1]) - 1)
 
 		if not self.board_state[x][y] == ' ':   
 			print('This square is already occupied')	
@@ -155,7 +155,6 @@ class Board(object):
 			diagonal = lambda i, axis: self.board_state[2*(axis%2) +((-1)**axis)*i][i] 
 			return [diagonal(i, axis) for i in range(3)].count(mark)
 
-	###UNTESTED##
 	def evaluate_game(self):
 		self.game_state = 'continue'
 		self.winner = None
@@ -213,7 +212,14 @@ class TestTicTac(unittest.TestCase):
 						   				  ['o', 'x', 'o'],
 										  ['x', ' ', ' ']])
 		self.board3.evaluate_game()
-	
+
+	def test_update_board(self):
+		board = self.board3
+		board.update_board('b3')
+		self.assertEqual(board.board_state[2][1], 'o')
+		board.update_board('a2')
+		self.assertEqual(board.board_state[0][1], 'o')
+
 	def test_determine_turn(self):
 		self.assertEqual(self.board0.determine_turn(of = 'player'), self.board0.x)
 		self.assertEqual(self.board0.determine_turn(), self.board0.x)
@@ -284,6 +290,8 @@ class TestTicTac(unittest.TestCase):
 		self.assertEqual(self.board3.game_state, 'win', 'This game should have a winner')
 		self.assertEqual(self.board3.winner, self.board3.x, 'Winner listed here')
 
+
+	##UNTESTED##
 	
 #	def test_gameplay(self):
 		#should determine whose turn it is based on number of x's and o's, assuming
