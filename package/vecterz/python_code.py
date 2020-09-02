@@ -1,5 +1,10 @@
 import unittest, pdb
 import random, re
+from unittest.mock import patch
+
+def examine_mock():
+	input('This is the prompt\n')
+	return 'This is the answer'
 
 class Board(object):
 
@@ -70,7 +75,6 @@ class Board(object):
 	def blank_board(self):
 		return [[' ', ' ', ' '] for i in range(3)]
 	
-	###UNTESTED##
 	def __init__(self, users = None, board_state= None):
 		'''
 		TESTING FORMAT ONLY
@@ -82,6 +86,7 @@ class Board(object):
 		else:
 			self.board_state = self.blank_board()	
 
+		self.quit, self.reboot = False, False
 		self.evaluate_game()
 
 	def __repr__(self):
@@ -186,8 +191,52 @@ class Board(object):
 		pass
 
 	###UNTESTED###
-	def package_input(self, prompt, input_type = None):
-		pass
+	##DO NOT REMOVE TEST LABEL UNTIL ALL DEPENDENT FUNCTIONS CONTAIN EXCEPTION CLAUSES###
+	def sanitize_input(self, prompt, input_type = None):
+		#This should be able to take input of the following forms:
+			#Single letter commands (always always always)
+			#Board move commands
+			#Player names
+			#Yes/No Decisions
+		#The output will either be a string or an exception class.
+		#The exception classes are used for quitting and rebooting. 
+		#Help strings are printed inside this function, which then
+		#continues to solicit input.
+		#Note that this does not have an internal form for generating names
+		while True:
+			user_input = input(prompt + '\n')	
+			if user_input in ['q', 'r']:
+				confirm = input(f'Enter {user_input} again to confirm command\n')
+				if confirm == user_input: 
+					self.quit = user_input == 'q'
+					self.reboot = user_input =='r'
+					raise Exception(user_input)
+
+			elif user_input == 'h':
+				print(self.help_string)
+
+			elif user_input == 'b':
+				print(self.blurb_string)
+			
+			elif input_type == 'move':
+				valid_move = re.compile(r'[abc][123]')		
+				matched_move = valid_move.match(user_input)
+				if not matched_move:
+					print('Invalid entry')
+				else:
+					return matched_move[0]
+
+			elif input_type == 'decision':
+				valid_decision = re.compile(r'[yn]')
+				matched_decision = valid_decision.match(user_input)
+				if not matched_decision:
+					print('Invalid entry')
+				else:
+					return matched_decision[0] == 'y'
+
+			else:
+				#Also if input_type == 'names'
+				return user_input	
 
 	def prompt(self):
 		switcher = {
@@ -223,6 +272,44 @@ class TestTicTac(unittest.TestCase):
 
 		self.board4 = Board(users = ['Nathan', 'Big Guy'])
 
+	@patch('builtins.input',  side_effect = ['q', 'q'])
+	def test_sanitize_q(self, mock_input):
+		board = self.board4
+		prompt = board.prompt()
+		try:
+			board.sanitize_input(prompt)
+			self.assertEqual(True, False, 'Command Exception not raised')
+		except Exception: 
+			self.assertEqual(board.quit, True, 'Exception raised but quit value not set')
+	
+	@patch('builtins.input',  side_effect = ['r', 'r'])
+	def test_sanitize_r(self, mock_input):
+		board = self.board4
+		prompt = board.prompt()
+		try:
+			board.sanitize_input(prompt)
+			self.assertEqual(True, False, 'Command Exception not raised')
+		except Exception: 
+			self.assertEqual(board.reboot, True, 'Exception raised but reboot value not set')
+
+
+	@patch('builtins.input', side_effect = ['b1', 'a1', 'fuckup', 'a2'])
+	def test_sanitize_moves(self, mock_input):
+		board = self.board4; prompt = board.prompt()
+		for mv in ['b1', 'a1', 'a2']:
+			self.assertEqual(board.sanitize_input(prompt, input_type = 'move'), mv)
+		
+	@patch('builtins.input', side_effect = ['y', 'fuckup', 'n'])
+	def test_sanitize_decisions(self, mock_input):
+		board = self.board4; prompt = board.prompt()
+		self.assertEqual(board.sanitize_input(prompt, input_type = 'decision'), True)
+		self.assertEqual(board.sanitize_input(prompt, input_type = 'decision'), False)
+
+	@patch('builtins.input', return_value = 'Nathan') 
+	def test_sanitize_names(self, mock_input):
+		board = self.board4; prompt = board.prompt()
+		self.assertEqual(board.sanitize_input(prompt, input_type = 'names'), 'Nathan')
+
 	def test_prompt(self):
 		board = self.board2
 		self.assertEqual(board.prompt(), 'Looks like a draw!')
@@ -247,18 +334,6 @@ class TestTicTac(unittest.TestCase):
 		self.assertEqual(self.board1.determine_turn(), self.board1.o)
 		self.assertEqual(self.board1.determine_turn(of = 'mark'), 'o')
 
-	def test_get_input_commands(self):
-		pass
-		#Should filter out q, quit, r, reboot, s, save, h, help, b, blurb
-#		@patch('builtins.input', side_effect =['q','quit']) 
-#		
-#		@patch('builtins.input', side_effect =['r', 'reboot']) 
-#	
-#		@patch('builtins.input', side_effect =['s', 'save']) 
-#		
-#		@patch('builtins.input', side_effect =['h', 'help']) 
-#		
-#		@patch('builtins.input', side_effect =['b', 'blurb']) 
 		
 	def test_count_moves(self):
 		self.assertEqual(self.board0.count_moves()['x'],4)
