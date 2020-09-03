@@ -1,6 +1,4 @@
-import unittest, pdb
 import random, re
-from unittest.mock import patch
 
 class Board(object):
 	help_string = '''

@@ -1,3 +1,6 @@
+import unittest
+from unittest.mock import patch
+
 class TestTicTac(unittest.TestCase):
 	def setUp(self):
 		self.board0 = Board(users = ['Nathan', 'Big Guy'],
