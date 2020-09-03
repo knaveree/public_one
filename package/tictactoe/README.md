@@ -5,4 +5,7 @@ Each game is an instance of the class
 'Board', which the user can import from the 
 module without any nonstandard dependencies. 
 Gameplay progresses as expected after instant-
-iation of each Board object.
+iation of each Board object, or running
+__main__ from module. 
+
+
