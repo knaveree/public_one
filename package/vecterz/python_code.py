@@ -6,8 +6,10 @@ def examine_mock():
 	input('This is the prompt\n')
 	return 'This is the answer'
 
-class Board(object):
 
+class Board(object):
+	
+	
 	help_string = '''
 		The interface responds to the following commands:
 
@@ -79,8 +81,11 @@ class Board(object):
 		'''
 		TESTING FORMAT ONLY
 		'''
-		self.x, self.o = (users[0], users[1]) if users else (None, None)
-
+		if users:
+			self.x, self.o = (users[0], users[1])
+		else:
+			self.x, self.o = None, None
+		
 		if board_state:
 			self.board_state = board_state
 		else:
@@ -116,13 +121,18 @@ class Board(object):
 		self.x, self.o = names_list[random_pick], names_list[complement]
 		return None
 
-	###UNTESTED###	
 	def startup(self):
+		prompt = '''
+		Welcome to the single most boring game known to man. 
 		'''
-		UNFINISHED
-		'''
-		pass
-
+		print(prompt)
+		names = list()
+		for i in range(2):
+			name = self.sanitize_input(f'Enter player {i+1} name', input_type = 'names')	
+			names.append(name)
+		random.shuffle(names)
+		self.x, self.o = names[0], names[1]			
+		self.board_state = self.blank_board()
 
 	def update_board(self, square_id):
 		'''
@@ -188,21 +198,30 @@ class Board(object):
 
 	###UNTESTED###
 	def user_interface(self):
-		pass
+		'''
+		This function is a single pass through the interface loop.
+		Control flow for the loop is contained in the command loop
+		function rather than here.
+		'''
 
-	###UNTESTED###
-	##DO NOT REMOVE TEST LABEL UNTIL ALL DEPENDENT FUNCTIONS CONTAIN EXCEPTION CLAUSES###
+		prompt = self.prompt()			
+		print(self) #Prints the board
+
+		if self.game_state in ['draw', 'win']:
+			start_new_game = self.sanitize_input(prompt, input_type='decision')
+			if start_new_game:
+				self.board_state = self.blank_board()
+				self.evaluate_game()
+				return None				
+			else:
+				self.quit = True
+				raise Exception('q')
+		else:
+			user_input = self.sanitize_input(prompt, input_type='move')
+			self.update_board(user_input)		
+			return None
+
 	def sanitize_input(self, prompt, input_type = None):
-		#This should be able to take input of the following forms:
-			#Single letter commands (always always always)
-			#Board move commands
-			#Player names
-			#Yes/No Decisions
-		#The output will either be a string or an exception class.
-		#The exception classes are used for quitting and rebooting. 
-		#Help strings are printed inside this function, which then
-		#continues to solicit input.
-		#Note that this does not have an internal form for generating names
 		while True:
 			user_input = input(prompt + '\n')	
 			if user_input in ['q', 'r']:
@@ -240,14 +259,38 @@ class Board(object):
 
 	def prompt(self):
 		switcher = {
-			'win': f'Game over! {self.winner} wins!',
-			'draw' : 'Looks like a draw!',
-			'continue' : f'It\'s {self.determine_turn()}\'s turn!' 
+			'win': f'Game over! {self.winner} wins! Play again?',
+			'draw' : 'Looks like a draw! Play again?',
+			'continue' : f'It\'s {self.determine_turn()}\'s turn! Select square.' 
 		}
 		return switcher.get(self.game_state, 
-			f'Let the games begin! It\'s {self.determine_turn()}\'s turn!')
+			f'Let the games begin! It\'s {self.determine_turn()}\'s turn! Select square.')
 
-	
+	###UNTESTED###
+	def command_loop(self):
+		while True:
+			self.startup()
+			try:
+				while True:
+					self.user_interface()	
+			except:
+				if self.quit:
+					self.quit = False
+					print('Thank you for playing!')
+					return None	
+				elif self.reboot:
+					self.reboot = False
+					continue	
+
+###UNTESTED###
+def main():
+	pass
+	board = Board()
+	board.command_loop()
+
+
+
+
 class TestTicTac(unittest.TestCase):
 	def setUp(self):
 		self.board0 = Board(users = ['Nathan', 'Big Guy'],
@@ -271,6 +314,39 @@ class TestTicTac(unittest.TestCase):
 										  ['x', ' ', ' ']])
 
 		self.board4 = Board(users = ['Nathan', 'Big Guy'])
+
+	@patch('builtins.input', side_effect = ['b2', 'a2', 'a1', 'b1'])
+	def test_user_interface(self, mock_input):
+		board = self.board4
+		board.user_interface()
+		self.assertEqual(board.board_state[1][1], 'x', 'Center square should be x')
+		self.assertEqual(board.winner, None, 'Winner value should be defined as None')
+		self.assertEqual(board.game_state, 'continue')
+
+	@patch('builtins.input', side_effect = ['Nathan', 'Big Guy'])
+	def test_startup(self, mock_input):
+		board = Board()	
+		board.startup()
+		self.assertEqual(board.board_state, board.blank_board())	
+		self.assertTrue((board.x, board.o == ('Nathan', 'Big Guy')) or (board.x, board.o == ('Big Guy', 'Nathan')))
+
+	@patch('builtins.input', side_effect = ['q', 'q'])
+	def test_startup_command_q(self, mock_input):
+		board = Board()	
+		try:
+			board.startup()
+			self.assertEqual(True, False, 'Did not throw exception')
+		except:
+			self.assertEqual(board.quit, True, 'Should set quit attribute to True')
+
+	@patch('builtins.input', side_effect = ['r', 'r'])
+	def test_startup_command_r(self, mock_input):
+		board = Board()	
+		try:
+			board.startup()
+			self.assertEqual(True, False, 'Did not throw exception')
+		except:
+			self.assertEqual(board.reboot, True, 'Should set reboot attribute to True')
 
 	@patch('builtins.input',  side_effect = ['q', 'q'])
 	def test_sanitize_q(self, mock_input):
