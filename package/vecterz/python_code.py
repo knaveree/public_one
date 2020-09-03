@@ -101,13 +101,6 @@ class Board(object):
 		'''
 		return output
 
-	###UNTESTED###
-	def save(self):
-		'''
-		UNFINISHED
-		'''
-		pass
-
 	def random_assign(self, names_list):
 		random_pick = random.randint(0,1)
 		complement = (random_pick + 1) % 2
@@ -189,7 +182,6 @@ class Board(object):
 				if self.count_moves()['total'] == 9:
 					self.game_state = 'draw'
 
-	###UNTESTED###
 	def user_interface(self):
 		'''
 		This function is a single pass through the interface loop.
